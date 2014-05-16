@@ -109,6 +109,11 @@ struct git_refdb_backend {
 	int (*del)(git_refdb_backend *backend, const char *ref_name, const git_oid *old_id, const char *old_target);
 
 	/**
+	 * Update the reflog via changing of the provided git_reflog
+	 */
+	int (*update_reflog)(git_refdb_backend *backend, const char *refname, int (*cb)(git_reflog *reflog));
+
+	/**
 	 * Suggests that the given refdb compress or optimize its references.
 	 * This mechanism is implementation specific.  (For on-disk reference
 	 * databases, this may pack all loose references.)    A refdb

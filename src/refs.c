@@ -1262,3 +1262,16 @@ const char *git_reference_shorthand(const git_reference *ref)
 	/* No shorthands are avaiable, so just return the name */
 	return name;
 }
+
+int git_reference_update_reflog(git_repository *repo, const char *refname, int (*cb)(git_reflog *reflog))
+{
+	git_refdb *db;
+	int error;
+
+	assert(repo && refname && cb);
+
+	if ((error = git_repository_refdb__weakptr(&db, repo)) < 0)
+		return error;
+
+	return git_refdb_update_reflog(db, refname, cb);
+}

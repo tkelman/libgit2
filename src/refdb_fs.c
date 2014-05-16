@@ -63,6 +63,9 @@ typedef struct refdb_fs_backend {
 	uint32_t direach_flags;
 } refdb_fs_backend;
 
+static int refdb_reflog_fs__read(git_reflog **out, git_refdb_backend *_backend, const char *name);
+static int refdb_reflog_fs__write(git_refdb_backend *_backend, git_reflog *reflog);
+
 static int packref_cmp(const void *a_, const void *b_)
 {
 	const struct packref *a = a_, *b = b_;
@@ -1255,6 +1258,36 @@ static int refdb_fs_backend__rename(
 
 	*out = new;
 	return 0;
+}
+
+static int refdb_fs_backend__update_reflog(git_refdb_backend *_backend, const char *refname,
+					   int (*cb)(git_reflog *reflog))
+{
+	refdb_fs_backend *backend = (refdb_fs_backend *)_backend;
+	git_filebuf file = GIT_FILEBUF_INIT;
+	git_reflog *reflog;
+	int error;
+
+	assert(backend && refname && cb);
+
+	if ((error = loose_lock(&file, backend, refname)) < 0)
+		return error;
+
+	if ((error = refdb_reflog_fs__read(&reflog, _backend, refname)) < 0)
+		goto cleanup;
+
+	if ((error = cb(reflog)))
+	    goto cleanup;
+
+	    /* on successful return, write out the reflog */
+
+	error = refdb_reflog_fs__write(_backend, reflog);
+
+cleanup:
+	git_reflog_free(reflog);
+	git_filebuf_cleanup(&file);
+
+	return error;
 }
 
 static int refdb_fs_backend__compress(git_refdb_backend *_backend)
