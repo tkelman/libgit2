@@ -599,9 +599,9 @@ int git_stash_drop(
 	git_repository *repo,
 	size_t index)
 {
-	git_reference *stash;
+	git_reference *stash = NULL;
 	git_reflog *reflog = NULL;
-	git_reference_transaction *txn;
+	git_reference_transaction *txn = NULL;
 	size_t max;
 	int error;
 
@@ -609,7 +609,7 @@ int git_stash_drop(
 		return error;
 
 	if ((error = git_reference_lookup(&stash, repo, GIT_REFS_STASH_FILE)) < 0)
-		return error;
+		goto cleanup;
 
 	if ((error = git_reflog_read(&reflog, repo, GIT_REFS_STASH_FILE)) < 0)
 		goto cleanup;
@@ -622,17 +622,18 @@ int git_stash_drop(
 		goto cleanup;
 	}
 
+	if (max == 1) {
+		error = git_reference_delete(stash);
+		goto cleanup;
+	}
+
 	if ((error = git_reflog_drop(reflog, index, true)) < 0)
 		goto cleanup;
 
-	if ((error = git_reflog_write(reflog)) < 0)
+	if ((error = git_reference_commit(txn, reflog)) < 0)
 		goto cleanup;
 
-	if (max == 1) {
-		error = git_reference_delete(stash);
-		git_reference_free(stash);
-		stash = NULL;
-	} else if (index == 0) {
+	if (index == 0) {
 		const git_reflog_entry *entry;
 
 		entry = git_reflog_entry_byindex(reflog, 0);
@@ -646,6 +647,7 @@ int git_stash_drop(
 	}
 
 cleanup:
+	git_reference_transaction_free(txn);
 	git_reference_free(stash);
 	git_reflog_free(reflog);
 	return error;
