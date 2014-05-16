@@ -601,8 +601,12 @@ int git_stash_drop(
 {
 	git_reference *stash;
 	git_reflog *reflog = NULL;
+	git_reference_transaction *txn;
 	size_t max;
 	int error;
+
+	if ((error = git_reference_lock(&txn, repo, GIT_REFS_STASH_FILE)) < 0)
+		return error;
 
 	if ((error = git_reference_lookup(&stash, repo, GIT_REFS_STASH_FILE)) < 0)
 		return error;

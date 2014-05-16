@@ -56,6 +56,14 @@ struct git_reference_iterator {
 		git_reference_iterator *iter);
 };
 
+/** Transaction for safe reflog update */
+struct git_reference_transaction {
+	git_refdb *db;
+
+	int (*commit)(struct git_reference_transaction *, git_reflog *reflog);
+	void (*free)(struct git_reference_transaction *);
+};
+
 /** An instance for a custom backend */
 struct git_refdb_backend {
 	unsigned int version;
@@ -108,10 +116,8 @@ struct git_refdb_backend {
 	 */
 	int (*del)(git_refdb_backend *backend, const char *ref_name, const git_oid *old_id, const char *old_target);
 
-	/**
-	 * Update the reflog via changing of the provided git_reflog
-	 */
-	int (*update_reflog)(git_refdb_backend *backend, const char *refname, int (*cb)(git_reflog *reflog));
+	/** Create a transaction to update a reflog */
+	int (*lock)(struct git_reference_transaction **txn, git_refdb_backend *backend, const char *refname);
 
 	/**
 	 * Suggests that the given refdb compress or optimize its references.

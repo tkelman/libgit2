@@ -724,21 +724,13 @@ GIT_EXTERN(int) git_reference_is_valid_name(const char *refname);
  */
 GIT_EXTERN(const char *) git_reference_shorthand(const git_reference *ref);
 
-/**
- * Safely update a reflog
- *
- * Changes to the reflog must be done while under the lock of its
- * reference. This function will lock the ref, read its reflog and
- * pass it to the callback. If the callback returns 0, the contents of
- * the reflog object will be written to out.
- *
- * @param repo the repository in which the reference exists
- * @param refname the reference's name
- * @param cb the callback which will perform the transformation
- * @return 0 or an error code
- */
-GIT_EXTERN(int) git_reference_update_reflog(git_repository *repo, const char *refname,
-					    int (*cb)(git_reflog *reflog));
+GIT_EXTERN(int) git_reference_lock(git_reference_transaction **out, git_repository *repo,
+				   const char *refname);
+
+GIT_EXTERN(int) git_reference_commit(git_reference_transaction *txn, git_reflog *reflog);
+
+GIT_EXTERN(void) git_reference_transaction_free(git_reference_transaction *txn);
+
 /** @} */
 GIT_END_DECL
 #endif

@@ -207,11 +207,32 @@ int git_refdb_delete(struct git_refdb *db, const char *ref_name, const git_oid *
 	return db->backend->del(db->backend, ref_name, old_id, old_target);
 }
 
-int git_refdb_update_reflog(git_refdb *db, const char *refname, int (*cb)(git_reflog *reflog))
+int git_refdb_lock(git_reference_transaction **out, git_refdb *db, const char *refname)
 {
+	int error;
+
 	assert(db && db->backend);
 
-	return db->backend->update_reflog(db->backend, refname, cb);
+	if ((error = db->backend->lock(out, db->backend, refname)) < 0)
+		return error;
+
+	GIT_REFCOUNT_INC(db);
+	(*out)->db = db;
+
+	return 0;
+}
+
+int git_refdb_commit(git_reference_transaction *txn, git_reflog *reflog)
+{
+	return txn->commit(txn, reflog);
+}
+
+void git_refdb_transaction_free(git_reference_transaction *txn)
+{
+	git_refdb *db = txn->db;
+
+	txn->free(txn);
+	git_refdb_free(db);
 }
 
 int git_refdb_reflog_read(git_reflog **out, git_refdb *db,  const char *name)

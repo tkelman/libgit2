@@ -1261,7 +1261,7 @@ static int refdb_fs_backend__rename(
 }
 
 static int refdb_fs_backend__update_reflog(git_refdb_backend *_backend, const char *refname,
-					   int (*cb)(git_reflog *reflog))
+					   int (*cb)(git_reflog *reflog, void *payload), void *payload)
 {
 	refdb_fs_backend *backend = (refdb_fs_backend *)_backend;
 	git_filebuf file = GIT_FILEBUF_INIT;
@@ -1276,7 +1276,7 @@ static int refdb_fs_backend__update_reflog(git_refdb_backend *_backend, const ch
 	if ((error = refdb_reflog_fs__read(&reflog, _backend, refname)) < 0)
 		goto cleanup;
 
-	if ((error = cb(reflog)))
+	if ((error = cb(reflog, payload)))
 	    goto cleanup;
 
 	    /* on successful return, write out the reflog */
@@ -1288,6 +1288,59 @@ cleanup:
 	git_filebuf_cleanup(&file);
 
 	return error;
+}
+
+struct refdb_fs_transaction {
+	git_reference_transaction parent;
+	git_filebuf file;
+};
+
+static void refdb_fs_backend__txn_free(git_reference_transaction *_txn)
+{
+	struct refdb_fs_transaction *txn = (struct refdb_fs_transaction *)_txn;
+
+	git_filebuf_cleanup(&txn->file);
+	git__free(txn);
+}
+
+static int refdb_fs_backend__txn_commit(git_reference_transaction *_txn, git_reflog *reflog)
+{
+	int error;
+	struct refdb_fs_transaction *txn = (struct refdb_fs_transaction *)_txn;
+
+	assert(txn && reflog);
+
+	if ((error = refdb_reflog_fs__write(txn->parent.db->backend, reflog)) < 0)
+		return error;
+
+	git_filebuf_cleanup(&txn->file);
+
+	return 0;
+}
+
+static int refdb_fs_backend__lock(git_reference_transaction **out, git_refdb_backend *_backend,
+				  const char *refname)
+{
+	refdb_fs_backend *backend = (refdb_fs_backend *)_backend;
+	struct refdb_fs_transaction *txn;
+	int error;
+
+	assert(out && _backend && refname);
+
+	txn = git__calloc(1, sizeof(struct refdb_fs_transaction));
+	GITERR_CHECK_ALLOC(txn);
+
+	txn->parent.commit = refdb_fs_backend__txn_commit;
+	txn->parent.free = refdb_fs_backend__txn_free;
+
+	if ((error = loose_lock(&txn->file, backend, refname)) < 0) {
+		git__free(txn);
+		return error;
+	}
+
+	*out = (git_reference_transaction *)txn;
+
+	return 0;
 }
 
 static int refdb_fs_backend__compress(git_refdb_backend *_backend)
@@ -1865,6 +1918,7 @@ int git_refdb_backend_fs(
 	backend->parent.write = &refdb_fs_backend__write;
 	backend->parent.del = &refdb_fs_backend__delete;
 	backend->parent.rename = &refdb_fs_backend__rename;
+	backend->parent.lock = &refdb_fs_backend__lock;
 	backend->parent.compress = &refdb_fs_backend__compress;
 	backend->parent.has_log = &refdb_reflog_fs__has_log;
 	backend->parent.ensure_log = &refdb_reflog_fs__ensure_log;

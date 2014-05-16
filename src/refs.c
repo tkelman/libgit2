@@ -1263,15 +1263,25 @@ const char *git_reference_shorthand(const git_reference *ref)
 	return name;
 }
 
-int git_reference_update_reflog(git_repository *repo, const char *refname, int (*cb)(git_reflog *reflog))
+int git_reference_lock(git_reference_transaction **out, git_repository *repo, const char *refname)
 {
 	git_refdb *db;
 	int error;
 
-	assert(repo && refname && cb);
+	assert(out && repo && refname);
 
 	if ((error = git_repository_refdb__weakptr(&db, repo)) < 0)
 		return error;
 
-	return git_refdb_update_reflog(db, refname, cb);
+	return git_refdb_lock(out, db, refname);
+}
+
+int git_reference_commit(git_reference_transaction *txn, git_reflog *reflog)
+{
+	return git_refdb_commit(txn, reflog);
+}
+
+void git_reference_transaction_free(git_reference_transaction *txn)
+{
+	git_refdb_transaction_free(txn);
 }

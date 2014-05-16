@@ -44,6 +44,9 @@ void git_refdb_iterator_free(git_reference_iterator *iter);
 
 int git_refdb_write(git_refdb *refdb, git_reference *ref, int force, const git_signature *who, const char *message, const git_oid *old_id, const char *old_target);
 int git_refdb_delete(git_refdb *refdb, const char *ref_name, const git_oid *old_id, const char *old_target);
+int git_refdb_lock(git_reference_transaction **out, git_refdb *db, const char *refname);
+int git_refdb_commit(git_reference_transaction *txn, git_reflog *reflog);
+void git_refdb_transaction_free(git_reference_transaction *txn);
 
 int git_refdb_reflog_read(git_reflog **out, git_refdb *db,  const char *name);
 int git_refdb_reflog_write(git_reflog *reflog);
