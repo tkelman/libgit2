@@ -335,7 +335,7 @@ int git_clone_into(git_repository *repo, git_remote *_remote, const git_checkout
 	git_remote_set_update_fetchhead(remote, 0);
 	git_buf_printf(&reflog_message, "clone: from %s", git_remote_url(remote));
 
-	if ((error = git_remote_fetch(remote, signature, git_buf_cstr(&reflog_message))) != 0)
+	if ((error = git_remote_fetch(remote, NULL, signature, git_buf_cstr(&reflog_message))) != 0)
 		goto cleanup;
 
 	error = checkout_branch(repo, remote, co_opts, branch, signature, git_buf_cstr(&reflog_message));
@@ -515,7 +515,7 @@ int git_clone_local_into(git_repository *repo, git_remote *remote, const git_che
 
 	git_buf_printf(&reflog_message, "clone: from %s", git_remote_url(remote));
 
-	if ((error = git_remote_fetch(remote, signature, git_buf_cstr(&reflog_message))) != 0)
+	if ((error = git_remote_fetch(remote, NULL, signature, git_buf_cstr(&reflog_message))) != 0)
 		goto cleanup;
 
 	error = checkout_branch(repo, remote, co_opts, branch, signature, git_buf_cstr(&reflog_message));
