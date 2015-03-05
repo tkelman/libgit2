@@ -1,16 +1,16 @@
 version: '{build}'
-branches:
-  only:
-  - master
+#branches:
+#  only:
+#  - master
 environment:
   GITTEST_INVASIVE_FS_STRUCTURE: 1
   GITTEST_INVASIVE_FS_SIZE: 1
 
   matrix:
-  - GENERATOR: "Visual Studio 11"
-    ARCH: 32
-  - GENERATOR: "Visual Studio 11 Win64"
-    ARCH: 64
+#  - GENERATOR: "Visual Studio 11"
+#    ARCH: 32
+#  - GENERATOR: "Visual Studio 11 Win64"
+#    ARCH: 64
   - GENERATOR: "MSYS Makefiles"
     ARCH: 32
   - GENERATOR: "MSYS Makefiles"
