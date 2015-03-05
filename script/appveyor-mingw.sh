@@ -25,6 +25,7 @@ else
   mv mingw64 /MinGW
   choco install openssl.light
 fi
+ls -al /c/Program\ Files/OpenSSL/*
 cd build
 cmake -D ENABLE_TRACE=ON -D BUILD_CLAR=ON -D CMAKE_FIND_ROOT_PATH="C:\\Program Files\\OpenSSL" .. -G"$GENERATOR"
 cmake --build . --config RelWithDebInfo
