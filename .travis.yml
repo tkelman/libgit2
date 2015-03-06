@@ -3,45 +3,14 @@
 
 language: c
 
-os:
-  - linux
-  - osx
 
-compiler:
-  - gcc
-  - clang
 
-# Settings to try
-env:
- global:
-  - secure: "YnhS+8n6B+uoyaYfaJ3Lei7cSJqHDPiKJCKFIF2c87YDfmCvAJke8QtE7IzjYDs7UFkTCM4ox+ph2bERUrxZbSCyEkHdjIZpKuMJfYWja/jgMqTMxdyOH9y8JLFbZsSXDIXDwqBlC6vVyl1fP90M35wuWcNTs6tctfVWVofEFbs="
-  - GITTEST_INVASIVE_FS_SIZE=1
- matrix:
-  - OPTIONS="-DTHREADSAFE=ON -DCMAKE_BUILD_TYPE=Release"
-  - OPTIONS="-DTHREADSAFE=OFF -DBUILD_EXAMPLES=ON"
 
 matrix:
- fast_finish: true
- exclude:
-   - os: osx
-     compiler: gcc
  include:
    - compiler: i586-mingw32msvc-gcc
-     env: OPTIONS="-DBUILD_CLAR=OFF -DWIN32=ON -DMINGW=ON -DUSE_SSH=OFF"
-     os: linux
-   - compiler: gcc
-     env: COVERITY=1
-     os: linux
-   - compiler: gcc
-     env:
-       - VALGRIND=1
-         OPTIONS="-DBUILD_CLAR=ON -DBUILD_EXAMPLES=OFF -DCMAKE_BUILD_TYPE=Debug"
-     os: linux
- allow_failures:
-   - env: COVERITY=1
-   - env:
-       - VALGRIND=1
-         OPTIONS="-DBUILD_CLAR=ON -DBUILD_EXAMPLES=OFF -DCMAKE_BUILD_TYPE=Debug"
+     env: OPTIONS="-DBUILD_CLAR=OFF -DENABLE_TRACE=ON -DWIN32=ON -DMINGW=ON -DUSE_SSH=OFF"
+
 
 install:
   - ./script/install-deps-${TRAVIS_OS_NAME}.sh
